@@ -4,12 +4,7 @@
 <!DOCTYPE html>
 <html>
 <body>
-    @*<script type="text/javascript">
-            window.onload = function () {
-                getLocation();
 
-            }
-        </script>*@
     <p></p>
     <p id="demo"><b>Clique no botão para receber sua localização em Latitude e Longitude:</b></p>
     <button onclick="getLocation()">Sua Localização</button>
@@ -20,27 +15,30 @@
 
         var lat = "";
         var long = "";
-
+        
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(showPosition);
+
+
             }
             else { x.innerHTML = "O seu navegador não suporta Geolocalização."; }
 
-        }
+            function showPosition(position) {
 
-        function showPosition(position) {
-            lat = position.coords.latitude;
-            long = position.coords.longitude;
-            x.innerHTML = "Latitude: " + lat +
-                "<br>Longitude: " + long;
+                lat = position.coords.latitude;
+                long = position.coords.longitude;
 
-            //$.getJSON('Users/GetLocFriends?origLat=' + lat + "&origLong=" + long, function (data) {
-            //    console.log(data);
+                $.get('Users/GetAdressByLatLong?lat=' + lat + "&longt=" + long, function (data) {
+                    alert(data);
+                })
 
-            //})
-        };
-
+                x.innerHTML = "Latitude: " + lat +
+                    "<br>Longitude: " + long;
+                
+            }
+        };        
+            
         function GetLocFriendsJs() {
             if (lat != "") {
                 window.location = "Users/GetLocFriends?origLat=" + lat + "&origLong=" + long;
@@ -56,6 +54,7 @@
         }
 
     </script>
+
     <p></p>
     <button onclick="GetLocFriendsJs()">Amigos próximos</button>
     <p></p>

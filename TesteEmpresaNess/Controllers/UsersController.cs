@@ -1,15 +1,12 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using System.Device.Location;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using TesteNess.Models;
 
 namespace TesteNess.Controllers
@@ -45,10 +42,15 @@ namespace TesteNess.Controllers
 
                 foreach (var item in lstUsers)
                 {
+                    if (origLat.ToString() == item.Latitude)
+                    {
+                        origLat = origLat - 00.000001;
+                    }
+
                     string destLat = item.Latitude;
                     string destLong = item.Longitude;
 
-                    var dist = await CalcDist(origLat, origLong, destLat, destLong);
+                    double dist = CalcDistance(origLat, origLong, destLat, destLong);
                     var adress = await GetAdressByLatLong(destLat.ToString(), destLong.ToString());
 
                     var userDist = new UserDist
@@ -76,58 +78,28 @@ namespace TesteNess.Controllers
 
         }
 
-        public async Task<double> CalcDist2(double origLat, double origLong, double destLat, double destLong)
+        private double CalcDistance(double origem_lat, double origem_lng, string destino_lat, string destino_lng)
         {
+            double x1 = origem_lat;
+            string x2 = destino_lat;
+            double y1 = origem_lng;
+            string y2 = destino_lng;
+                      
+            double c = 90 - (Convert.ToDouble(y2));
 
-            double latA = origLat;
-            double longA = origLong;
-            double latB = destLat;
-            double longB = destLong;
-
-            var locA = new GeoCoordinate(latA, longA);
-            var locB = new GeoCoordinate(Convert.ToDouble(latB), Convert.ToDouble(longB));
-            double distance = locA.GetDistanceTo(locB); // metres
-
-            return distance;
-        }
-
-
-
-        public async Task<double> CalcDist(double origLat, double origLong, string destLat, string destLong)
-        {
-            double x1 = origLat;
-            double x2 = origLong;
-            string y1 = destLat;
-            string y2 = destLong;
-
-            // Distancia entre os 2 pontos no plano cartesiano ( pitagoras )
-            //double distancia = System.Math.Sqrt( System.Math.Pow( (x2 - x1), 2 ) + System.Math.Pow( (y2 - y1), 2 ) );
-
-            // ARCO AB = c 
-            double c = 90 - Convert.ToDouble((y2));
-
-            // ARCO AC = b 
-            double b = 90 - Convert.ToDouble((y1));
-
-            // Arco ABC = a 
-            // Diferença das longitudes: 
-            double a = Convert.ToDouble(x2) - Convert.ToDouble(x1);
-
-            // Formula: cos(a) = cos(b) * cos(c) + sen(b)* sen(c) * cos(A) 
+            double b = 90 - (y1);
+                        
+            double a = Convert.ToDouble(x2) - x1;
+                        
             double cos_a = Math.Cos(b) * Math.Cos(c) + Math.Sin(c) * Math.Sin(b) * Math.Cos(a);
 
             double arc_cos = Math.Acos(cos_a);
 
-            // 2 * pi * Raio da Terra = 6,28 * 6.371 = 40.030 Km 
-            // 360 graus = 40.030 Km 
-            // 3,2169287 = x 
-            // x = (40.030 * 3,2169287)/360 = 357,68 Km 
-
             double distancia = (40030 * arc_cos) / 360;
 
             return distancia;
-        }
-
+        }     
+               
         [HttpGet]
         public async Task<string> GetAdressByLatLong(string lat, string longt)
         {
@@ -142,15 +114,14 @@ namespace TesteNess.Controllers
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 HttpResponseMessage response = await client.GetAsync("api/geocode/json?latlng=" + lat/*.ToString().Replace(",", ".")*/ + "," + longt/*.ToString().Replace(",", ".")*/ + "&key=" + key);
                 if (response.IsSuccessStatusCode)
-                {  //GET
+                {  
                     var adress = response.Content.ReadAsStringAsync().Result;
-                    //var _adress = JObject.Parse(adress).ToString();
+                    
                     var adrs = JsonConvert.DeserializeObject<Adress>(adress);
 
                     var endereco = adrs.results.Select(x => x.formatted_address).FirstOrDefault();
 
-                    return endereco;
-                     
+                    return endereco;                     
                 }
                 else
                 {
@@ -158,34 +129,7 @@ namespace TesteNess.Controllers
                 }
             }
         }
-
-
-        //public async Task<JsonResult> GetAdressByLatLong(double lat, double longt)
-        //{
-
-        //    var api = "https://maps.googleapis.com/maps/api/geocode/json?latlng=";
-        //    var key = "AIzaSyCouprQQ2PQ2d8Rb1F9Q7Qyf5FwAjpJJBs";
-
-
-        //    try
-        //    {
-        //        var adress =  api + lat + "," + longt + "&" + key;
-        //        if (adress != null)
-        //        {
-        //            Adress _adress = adress;
-        //        }
-        //    }
-        //    catch (Exception)
-        //    {
-
-        //        throw;
-        //    }
-
-        //    return Json("");
-        //}
-
-
-        // GET: Users/Details/5
+        
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -218,7 +162,6 @@ namespace TesteNess.Controllers
         {
             if (ModelState.IsValid)
             {
-
                 //Convert.ToDouble(user.Latitude.ToString().Insert(3, ","));
                 //user.Longitude.ToString().Insert(3, ",");
 
