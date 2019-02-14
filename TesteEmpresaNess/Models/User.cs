@@ -15,8 +15,10 @@ namespace TesteNess.Models
         [Required(ErrorMessage = "Por favor, insira um nome com até 50 caracteres!")]
         public string Name { get; set; }
         public bool Principal { get; set; }
-        public decimal Longitude { get; set; }
-        public decimal Latitude { get; set; }
+        
+        public string Longitude { get; set; }
+       
+        public string Latitude { get; set; }
 
     }
 }

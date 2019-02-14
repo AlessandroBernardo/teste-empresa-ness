@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Device.Location;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -44,11 +45,11 @@ namespace TesteNess.Controllers
 
                 foreach (var item in lstUsers)
                 {
-                    double destLat = Convert.ToDouble(item.Latitude);
-                    double destLong = Convert.ToDouble(item.Longitude);
+                    string destLat = item.Latitude;
+                    string destLong = item.Longitude;
 
                     var dist = await CalcDist(origLat, origLong, destLat, destLong);
-                    var adress = await GetAdressByLatLong(destLat, destLong);
+                    var adress = await GetAdressByLatLong(destLat.ToString(), destLong.ToString());
 
                     var userDist = new UserDist
                     {
@@ -75,26 +76,42 @@ namespace TesteNess.Controllers
 
         }
 
+        public async Task<double> CalcDist2(double origLat, double origLong, double destLat, double destLong)
+        {
 
-        public async Task<double> CalcDist(double origLat, double origLong, double destLat, double destLong)
+            double latA = origLat;
+            double longA = origLong;
+            double latB = destLat;
+            double longB = destLong;
+
+            var locA = new GeoCoordinate(latA, longA);
+            var locB = new GeoCoordinate(Convert.ToDouble(latB), Convert.ToDouble(longB));
+            double distance = locA.GetDistanceTo(locB); // metres
+
+            return distance;
+        }
+
+
+
+        public async Task<double> CalcDist(double origLat, double origLong, string destLat, string destLong)
         {
             double x1 = origLat;
             double x2 = origLong;
-            double y1 = destLat;
-            double y2 = destLong;
+            string y1 = destLat;
+            string y2 = destLong;
 
             // Distancia entre os 2 pontos no plano cartesiano ( pitagoras )
             //double distancia = System.Math.Sqrt( System.Math.Pow( (x2 - x1), 2 ) + System.Math.Pow( (y2 - y1), 2 ) );
 
             // ARCO AB = c 
-            double c = 90 - (y2);
+            double c = 90 - Convert.ToDouble((y2));
 
             // ARCO AC = b 
-            double b = 90 - (y1);
+            double b = 90 - Convert.ToDouble((y1));
 
             // Arco ABC = a 
             // Diferença das longitudes: 
-            double a = x2 - x1;
+            double a = Convert.ToDouble(x2) - Convert.ToDouble(x1);
 
             // Formula: cos(a) = cos(b) * cos(c) + sen(b)* sen(c) * cos(A) 
             double cos_a = Math.Cos(b) * Math.Cos(c) + Math.Sin(c) * Math.Sin(b) * Math.Cos(a);
@@ -112,7 +129,7 @@ namespace TesteNess.Controllers
         }
 
         [HttpGet]
-        public async Task<JsonResult> GetAdressByLatLong(double lat, double longt)
+        public async Task<string> GetAdressByLatLong(string lat, string longt)
         {
             var key = "AIzaSyCouprQQ2PQ2d8Rb1F9Q7Qyf5FwAjpJJBs";
 
@@ -123,7 +140,7 @@ namespace TesteNess.Controllers
                 client.BaseAddress = new Uri("https://maps.googleapis.com/maps/");
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpResponseMessage response = await client.GetAsync("api/geocode/json?latlng=" + lat.ToString().Replace(",", ".") + "," + longt.ToString().Replace(",", ".") + "&key=" + key);
+                HttpResponseMessage response = await client.GetAsync("api/geocode/json?latlng=" + lat/*.ToString().Replace(",", ".")*/ + "," + longt/*.ToString().Replace(",", ".")*/ + "&key=" + key);
                 if (response.IsSuccessStatusCode)
                 {  //GET
                     var adress = response.Content.ReadAsStringAsync().Result;
@@ -132,11 +149,12 @@ namespace TesteNess.Controllers
 
                     var endereco = adrs.results.Select(x => x.formatted_address).FirstOrDefault();
 
-                    return Json(endereco);
+                    return endereco;
+                     
                 }
                 else
                 {
-                    return Json("");
+                    return "";
                 }
             }
         }
@@ -201,8 +219,8 @@ namespace TesteNess.Controllers
             if (ModelState.IsValid)
             {
 
-                Convert.ToDouble(user.Latitude.ToString().Insert(3, ","));
-                user.Longitude.ToString().Insert(3, ",");
+                //Convert.ToDouble(user.Latitude.ToString().Insert(3, ","));
+                //user.Longitude.ToString().Insert(3, ",");
 
                 _context.Add(user);
                 await _context.SaveChangesAsync();
