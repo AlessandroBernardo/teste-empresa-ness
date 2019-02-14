@@ -120,6 +120,10 @@ namespace TesteNess.Controllers
                     var adrs = JsonConvert.DeserializeObject<Adress>(adress);
 
                     var endereco = adrs.results.Select(x => x.formatted_address).FirstOrDefault();
+                    if (endereco == null)
+                    {
+                        return "Endereço não encontrado";
+                    }
 
                     return endereco;                     
                 }
