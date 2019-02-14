@@ -1,0 +1,44 @@
+﻿@model IEnumerable<TesteNess.Models.UserDist>
+@{
+    ViewData["Title"] = "GetLocFriends";
+}
+
+<h2>Amigos mais próximos</h2>
+
+<table class="table">
+
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Nome)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Distancia)
+
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Endereco)
+
+            </th>
+
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Nome)
+                </td>
+                <td>
+                    <b>Cerca de: </b>@Html.DisplayFor(modelItem => item.Distancia) <b>KM</b>
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Endereco)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
